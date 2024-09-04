@@ -26,7 +26,7 @@ model Restaurant {
 model Category {
   id          String       @id @default(uuid())
   name        String
-  imgUrl      String
+  imageUrl    String
   restaurants Restaurant[]
   products    Product[]
 }
@@ -35,7 +35,7 @@ model Product {
   id                 String     @id @default(uuid())
   name               String
   description        String
-  imgUrl             String
+  imageUrl           String
   price              Decimal    @db.Decimal(10, 2)
   discountPercentage Int        @default(0)
   restaurantId       String
