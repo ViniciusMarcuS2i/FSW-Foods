@@ -7,7 +7,7 @@ export function Search() {
     <div className="flex gap-2">
       <Input
         placeholder="Buscar restaurantes"
-        className="border-none bg-[#d7d7d7]"
+        className="border-none bg-[#f4f4f5]"
       />
       <Button size="icon">
         <SearchIcon size={20} />
