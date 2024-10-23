@@ -3,6 +3,7 @@
 @tailwind utilities;
 
 :root {
+  --roboto-font: "Roboto", sans-serif;
   --background: 0 0% 96%;
   --foreground: 0 0% 20%;
   --card: 356 50% 100%;
@@ -54,6 +55,6 @@
   }
 
   body {
-    @apply bg-[#fff] text-foreground antialiased;
+    @apply bg-[#fff] font-sans text-foreground antialiased;
   }
 }
