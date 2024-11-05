@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Roboto } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "./_context/cart";
+import { SessionProvider } from "next-auth/react";
 
 const roboto = Roboto({
   subsets: ["latin"],
@@ -22,7 +23,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <CartProvider>
-        <body className={roboto.className}>{children}</body>
+        <body className={roboto.className}>
+          <SessionProvider>{children}</SessionProvider>
+        </body>
       </CartProvider>
     </html>
   );
