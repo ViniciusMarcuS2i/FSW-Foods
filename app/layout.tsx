@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Roboto } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "./_context/cart";
+import { Toaster } from "./_components/ui/sonner";
 
 import AuthProvider from "./_providers/auth";
 
@@ -26,6 +27,7 @@ export default function RootLayout({
       <body className={roboto.className}>
         <AuthProvider>
           <CartProvider>{children}</CartProvider>
+          <Toaster />
         </AuthProvider>
       </body>
     </html>
