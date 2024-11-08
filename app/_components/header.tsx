@@ -21,7 +21,6 @@ import {
 } from "./ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Separator } from "./ui/separator";
-import { redirect } from "next/navigation";
 
 export const Header = () => {
   const { data } = useSession();
@@ -118,9 +117,12 @@ export const Header = () => {
                 <Button
                   variant="ghost"
                   className="w-full justify-start space-x-3 rounded-full text-sm font-normal"
+                  asChild
                 >
-                  <HeartIcon size={16} />
-                  <span className="block">Restaurantes favoritos</span>
+                  <Link href="/my-favorites-restaurants">
+                    <HeartIcon size={16} />
+                    <span className="block">Restaurantes favoritos</span>
+                  </Link>
                 </Button>
               </>
             )}
