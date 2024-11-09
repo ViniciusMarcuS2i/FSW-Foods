@@ -3,29 +3,34 @@
 import { revalidatePath } from "next/cache";
 import { db } from "../_lib/prisma";
 
-export const favoriteRestaurant = async (
+export const toggleFavoriteRestaurant = async (
   userId: string,
   restaurantId: string,
 ) => {
-  await db.userFavoriteResttaurant.create({
-    data: {
+  const isFavorite = await db.userFavoriteResttaurant.findFirst({
+    where: {
       userId,
       restaurantId,
     },
   });
-  revalidatePath("/");
-};
 
-export const unfavoriteRestaurant = async (
-  userId: string,
-  restaurantId: string,
-) => {
-  await db.userFavoriteResttaurant.delete({
-    where: {
-      userId_restaurantId: {
-        userId,
-        restaurantId,
+  if (isFavorite) {
+    await db.userFavoriteResttaurant.delete({
+      where: {
+        userId_restaurantId: {
+          userId,
+          restaurantId,
+        },
       },
+    });
+    revalidatePath("/");
+    return;
+  }
+
+  await db.userFavoriteResttaurant.create({
+    data: {
+      userId,
+      restaurantId,
     },
   });
   revalidatePath("/");

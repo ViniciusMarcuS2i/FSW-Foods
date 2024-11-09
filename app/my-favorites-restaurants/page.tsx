@@ -24,9 +24,7 @@ const MyFavoriteRestaurantsPage = async () => {
     <>
       <Header />
       <div className="px-5 py-6">
-        <h2 className="mb-6 text-lg font-semibold">
-          Restaurantes Recomendados
-        </h2>
+        <h2 className="mb-6 text-lg font-semibold">Restaurantes Favoritos</h2>
         {userFavoriteRestaurants.length > 0 ? (
           <>
             <div className="flex flex-col gap-6">
