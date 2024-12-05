@@ -2,14 +2,19 @@ import { getServerSession } from "next-auth";
 import { db } from "../_lib/prisma";
 import { authOptions } from "../_lib/auth";
 import { redirect } from "next/navigation";
-import { Header } from "../_components/header";
+import Header from "../_components/header";
 import OrderItem from "./_components/order-item";
 
 const MyOrdersPage = async () => {
   const session = await getServerSession(authOptions);
+
+  if (!session?.user) {
+    return redirect("/");
+  }
+
   const orders = await db.order.findMany({
     where: {
-      userId: session?.user.id,
+      userId: session.user.id,
     },
     include: {
       restaurant: true,
@@ -20,21 +25,16 @@ const MyOrdersPage = async () => {
       },
     },
   });
-
-  if (!session?.user) {
-    return redirect("/");
-  }
-
   return (
     <>
       <Header />
 
-      <div className="px-5 pt-6">
-        <h2 className="pb-6 text-lg font-semibold">Meus Pedidos</h2>
+      <div className="mx-auto max-w-[1224px] py-6 max-lg:px-4">
+        <h2 className="text-lg font-semibold">Meus Pedidos</h2>
 
-        <div className="space-y-4">
+        <div className="space-y-3 py-6">
           {orders.map((order) => (
-            <OrderItem order={order} key={order.id} />
+            <OrderItem key={order.id} order={order} />
           ))}
         </div>
       </div>

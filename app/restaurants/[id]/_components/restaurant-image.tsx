@@ -3,8 +3,9 @@
 import { Button } from "@/app/_components/ui/button";
 import isRestaurantFavorited from "@/app/_helpers/restaurant";
 import UseToggleFavoriteRestaurant from "@/app/_hooks/use-toggle-favorite-restaurant";
+
 import { Restaurant, UserFavoriteResttaurant } from "@prisma/client";
-import { ChevronLeft, HeartIcon } from "lucide-react";
+import { ChevronLeftIcon, HeartIcon } from "lucide-react";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -14,14 +15,17 @@ interface RestaurantImageProps {
   userFavoriteRestaurants: UserFavoriteResttaurant[];
 }
 
-export function RestaurantImage({
+const RestaurantImage = ({
   restaurant,
   userFavoriteRestaurants,
-}: RestaurantImageProps) {
-  const router = useRouter();
+}: RestaurantImageProps) => {
   const { data } = useSession();
-  const isFavorite = userFavoriteRestaurants?.some(
-    (favorite) => favorite.restaurantId === restaurant.id,
+
+  const router = useRouter();
+
+  const isFavorite = isRestaurantFavorited(
+    restaurant.id,
+    userFavoriteRestaurants,
   );
 
   const { handleFavoriteClick } = UseToggleFavoriteRestaurant({
@@ -30,30 +34,37 @@ export function RestaurantImage({
     restaurantIsFavorited: isFavorite,
   });
 
-  const handleGoBack = () => router.back();
+  const handleBackClick = () => router.back();
 
   return (
-    <div className="relative z-10 h-[250px] w-full">
+    <div className="relative h-[380px] w-full max-lg:h-[250px]">
       <Image
         src={restaurant.imageUrl}
         alt={restaurant.name}
         fill
-        className="object-cover"
+        sizes="100%"
+        className="rounded-sm object-cover max-lg:rounded-none"
       />
+
       <Button
-        className="absolute left-4 top-4 rounded-full bg-white text-foreground hover:text-white"
+        className="absolute left-4 top-4 hidden rounded-full bg-white text-foreground hover:text-white max-lg:flex"
         size="icon"
-        onClick={handleGoBack}
+        onClick={handleBackClick}
       >
-        <ChevronLeft />
+        <ChevronLeftIcon />
       </Button>
+
       <Button
         size="icon"
-        className={`absolute right-4 top-4 rounded-full bg-gray-700 ${isFavorite && "bg-primary hover:bg-gray-700"}`}
+        className={`absolute right-4 top-4 hidden rounded-full bg-gray-700 max-lg:flex ${
+          (isFavorite as any) && "bg-primary hover:bg-gray-700"
+        }`}
         onClick={handleFavoriteClick}
       >
-        <HeartIcon className="fill-white" size={20} />
+        <HeartIcon size={20} className="fill-white" />
       </Button>
     </div>
   );
-}
+};
+
+export default RestaurantImage;

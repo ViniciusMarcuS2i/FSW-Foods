@@ -1,35 +1,39 @@
-import { Header } from "@/app/_components/header";
-import { ProductItem } from "@/app/_components/product-item";
+import Header from "@/app/_components/header";
+import ProductItem from "@/app/_components/product-item";
 import { db } from "@/app/_lib/prisma";
-import React from "react";
 
-const RecommendedProductPage = async () => {
+const RecommendedProductsPage = async () => {
   const products = await db.product.findMany({
     where: {
       discountPercentage: {
         gt: 0,
       },
     },
-    take: 20,
     include: {
       restaurant: {
         select: {
           name: true,
+          id: true,
         },
       },
+    },
+    distinct: "name",
+    orderBy: {
+      categoryId: "desc",
     },
   });
   return (
     <>
       <Header />
-      <div className="px-5 py-6">
-        <h2 className="mb-6 text-lg font-semibold">Pedidos Recomendados</h2>
-        <div className="grid grid-cols-2 gap-6">
+
+      <div className="mx-auto max-w-[1224px] py-6 max-xl:px-5">
+        <h2 className="mb-6 text-lg font-semibold">Pedidos recomendados</h2>
+        <div className="grid grid-cols-2 gap-6 lg:grid-cols-5">
           {products.map((product) => (
             <ProductItem
-              product={product}
+              className="min-w-full max-w-full"
               key={product.id}
-              className="min-w-full"
+              product={product}
             />
           ))}
         </div>
@@ -38,4 +42,4 @@ const RecommendedProductPage = async () => {
   );
 };
 
-export default RecommendedProductPage;
+export default RecommendedProductsPage;

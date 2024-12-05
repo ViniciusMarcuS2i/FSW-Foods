@@ -6,30 +6,43 @@ import { Input } from "./ui/input";
 import { FormEventHandler, useState } from "react";
 import { useRouter } from "next/navigation";
 
-export function Search() {
+interface SearchProps {
+  isSecondary?: boolean;
+}
+
+const Search = ({ isSecondary }: SearchProps) => {
   const router = useRouter();
   const [search, setSearch] = useState("");
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
   };
-  const handleSearchSubmit: FormEventHandler<HTMLFormElement> = (e) => {
+
+  const handleSearchSubmmit: FormEventHandler<HTMLFormElement> = (e) => {
     e.preventDefault();
-    if (!search) return;
+    if (!search) {
+      return;
+    }
 
     router.push(`/restaurants?search=${search}`);
   };
 
   return (
-    <form onSubmit={handleSearchSubmit} className="flex gap-2">
+    <form onSubmit={handleSearchSubmmit} className="flex gap-2">
       <Input
         placeholder="Buscar restaurantes"
-        className="border-none bg-[#f4f4f5]"
-        onChange={handleSearch}
-        value={search}
+        className="border-none"
+        onChange={handleChange}
       />
-      <Button size="icon" type="submit">
+      <Button
+        className={`${isSecondary && "bg-yellow-500"}`}
+        type="submit"
+        size="icon"
+      >
         <SearchIcon size={20} />
       </Button>
     </form>
   );
-}
+};
+
+export default Search;

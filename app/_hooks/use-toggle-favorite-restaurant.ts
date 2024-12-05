@@ -5,40 +5,41 @@ import { useRouter } from "next/navigation";
 
 interface UseToggleFavoriteRestaurantProps {
   userId?: string;
-  restaurantId: string;
   userFavoriteRestaurants?: UserFavoriteResttaurant[];
-  restaurantIsFavorited?: boolean;
+  restaurantId: string;
+  restaurantIsFavorited?: boolean | any;
 }
 
-const UseToggleFavoriteRestaurant = ({
-  restaurantId,
+const useToggleFavoriteRestaurant = ({
   userId,
+  restaurantId,
   restaurantIsFavorited,
 }: UseToggleFavoriteRestaurantProps) => {
   const router = useRouter();
 
   const handleFavoriteClick = async () => {
     if (!userId) return;
+
     try {
       await toggleFavoriteRestaurant(userId, restaurantId);
-      toast.success(
+
+      toast(
         restaurantIsFavorited
-          ? "Removido dos favoritos"
-          : "Adicionado aos favoritos",
+          ? "Restaurante removido dos favoritos."
+          : "Restaurante favoritado.",
         {
           action: {
-            label: "Ver favoritos",
-            onClick: () => {
-              router.push("/my-favorites-restaurants");
-            },
+            label: "Ver Favoritos",
+            onClick: () => router.push("/my-favorites-restaurants"),
           },
         },
       );
-    } catch (e) {
-      toast.error("Não foi possível favoritar o restaurante");
+    } catch (error) {
+      toast.error("Erro ao favoritar restaurante.");
     }
   };
+
   return { handleFavoriteClick };
 };
 
-export default UseToggleFavoriteRestaurant;
+export default useToggleFavoriteRestaurant;

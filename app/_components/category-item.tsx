@@ -6,19 +6,22 @@ interface CategoryItemProps {
   category: Category;
 }
 
-export function CategoryItem({ category }: CategoryItemProps) {
+const CategoryItem = ({ category }: CategoryItemProps) => {
   return (
     <Link
-      className="flex items-center justify-center gap-3 rounded-full bg-white px-4 py-3 shadow-md"
       href={`/categories/${category.id}/products`}
+      className="flex min-w-40 items-center justify-center gap-1 rounded-sm border border-muted bg-white px-4 py-3 min-[1024px]:w-60"
     >
       <Image
         src={category.imageUrl}
         alt={category.name}
-        height={30}
         width={30}
+        height={30}
       />
-      <span className="text-sm font-semibold">{category.name}</span>
+
+      <span className="truncate text-sm font-semibold">{category.name}</span>
     </Link>
   );
-}
+};
+
+export default CategoryItem;

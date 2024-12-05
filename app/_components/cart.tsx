@@ -5,20 +5,18 @@ import { Card, CardContent } from "@/components/ui/card";
 import { formatCurrency } from "../_helpers/price";
 import { Separator } from "./ui/separator";
 import { Button } from "./ui/button";
-
-import { OrderStatus } from "@prisma/client";
 import { createOrder } from "../_actions/order";
+import { OrderStatus } from "@prisma/client";
 import { useSession } from "next-auth/react";
 import { Loader2 } from "lucide-react";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
   AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialog,
+  AlertDialogContent,
   AlertDialogTitle,
+  AlertDialogCancel,
+  AlertDialogAction,
 } from "./ui/alert-dialog";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -28,20 +26,20 @@ interface CartProps {
 }
 
 const Cart = ({ setIsOpen }: CartProps) => {
-  const { data } = useSession();
-  const [isSubmitLoading, setIsSubmitLoading] = useState(false);
-  const [isConfirmationDialogOpen, setIsConfirmationDialogOpen] =
-    useState(false);
-
   const router = useRouter();
-
+  const { data } = useSession();
   const { products, subtotalPrice, totalPrice, totalDiscounts, clearCart } =
     useContext(CartContext);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const handleFinishOrderClick = async () => {
-    const restaurant = products?.[0]?.restaurant;
+    if (!data?.user) return;
+    const restaurant = products[0]?.restaurant;
+
     try {
-      setIsSubmitLoading(true);
+      setIsSubmitting(true);
+
       await createOrder({
         subtotalPrice,
         totalPrice,
@@ -49,15 +47,11 @@ const Cart = ({ setIsOpen }: CartProps) => {
         deliveryFee: restaurant.deliveryFee,
         deliveryTimeMinutes: restaurant.deliveryTimeMinutes,
         restaurant: {
-          connect: {
-            id: restaurant.id,
-          },
+          connect: { id: restaurant.id },
         },
         status: OrderStatus.CONFIRMED,
         user: {
-          connect: {
-            id: data?.user.id,
-          },
+          connect: { id: data.user.id },
         },
         products: {
           createMany: {
@@ -71,103 +65,99 @@ const Cart = ({ setIsOpen }: CartProps) => {
 
       clearCart();
       setIsOpen(false);
-      toast("Pedido realizado com sucesso!", {
+
+      toast("Pedido finalizado com sucesso!", {
         description: "Você pode acompanhá-lo na tela dos seus pedidos.",
         action: {
-          label: "Meus pedidos",
+          label: "Meus Pedidos",
           onClick: () => router.push("/my-orders"),
         },
       });
     } catch (error) {
-      console.log(error);
+      console.error(error);
     } finally {
-      setIsSubmitLoading(false);
+      setIsSubmitting(false);
     }
   };
 
-  if (!data?.user) return;
+  if (products.length === 0) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-1 text-muted-foreground">
+        <span>¯\_(ツ)_/¯</span>
+        <span className="text-sm">Parece que sua sacola está vazia!</span>
+      </div>
+    );
+  }
 
   return (
     <>
-      {" "}
-      <div className="flex h-full flex-col py-5">
-        {products.length > 0 ? (
-          <>
-            <div className="flex-auto space-y-4">
-              {products.map((product) => (
-                <CartItem key={product.id} cartProduct={product} />
-              ))}
-            </div>
-            <div className="mt-6">
-              <Card>
-                <CardContent className="space-y-2 p-5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">Subtotal</span>
-                    <span>{formatCurrency(subtotalPrice)}</span>
-                  </div>
+      <div className="flex h-full flex-col py-6">
+        <div className="flex-auto space-y-4">
+          {products.map((product) => (
+            <CartItem key={product.id} cartProduct={product} />
+          ))}
+        </div>
 
-                  <Separator />
+        <div className="space-y-6">
+          <Card>
+            <CardContent className="space-y-2 p-5">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">Subtotal</span>
+                <span>{formatCurrency(subtotalPrice)}</span>
+              </div>
 
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">Descontos</span>
-                    <span>- {formatCurrency(totalDiscounts)}</span>
-                  </div>
+              <Separator className="bg-muted" />
 
-                  <Separator />
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">Entrega</span>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">Entrega</span>
 
-                    {Number(products?.[0].restaurant.deliveryFee) === 0 ? (
-                      <span className="uppercase text-primary">Grátis</span>
-                    ) : (
-                      formatCurrency(
-                        Number(products?.[0].restaurant.deliveryFee),
-                      )
-                    )}
-                  </div>
-                  <Separator />
-                  <div className="flex items-center justify-between text-xs font-semibold">
-                    <span>Total</span>
-                    <span>{formatCurrency(totalPrice)}</span>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-            <Button
-              className="mt-6 w-full"
-              onClick={() => setIsConfirmationDialogOpen(true)}
-              disabled={isSubmitLoading}
-            >
-              {isSubmitLoading && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
-              Finalizar Pedido
-            </Button>
-          </>
-        ) : (
-          <h2 className="font-medium">Sua sacola está vazia.</h2>
-        )}
+                {Number(products[0]?.restaurant.deliveryFee) === 0 ? (
+                  <span className="uppercase text-primary">Grátis</span>
+                ) : (
+                  formatCurrency(Number(products[0]?.restaurant.deliveryFee))
+                )}
+              </div>
+
+              <Separator className="bg-muted" />
+
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">Descontos</span>
+                <span>- {formatCurrency(totalDiscounts)}</span>
+              </div>
+
+              <Separator className="bg-muted" />
+
+              <div className="flex items-center justify-between text-sm font-semibold">
+                <span>Total</span>
+                <span>{formatCurrency(totalPrice)}</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Button
+            className="h-11 w-full"
+            onClick={() => setIsDialogOpen(true)}
+            disabled={isSubmitting}
+          >
+            Finalizar pedido
+          </Button>
+        </div>
       </div>
-      <AlertDialog
-        open={isConfirmationDialogOpen}
-        onOpenChange={setIsConfirmationDialogOpen}
-      >
-        <AlertDialogContent>
+
+      <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <AlertDialogContent className="w-[90%] rounded-sm">
           <AlertDialogHeader>
             <AlertDialogTitle>Deseja finalizar seu pedido?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Ao finalizar seu pedido, você concorda com nossos termos de
-              plataforma.
-            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isSubmitLoading}>
-              Cancelar
-            </AlertDialogCancel>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              disabled={isSubmitLoading}
               onClick={handleFinishOrderClick}
+              disabled={isSubmitting}
             >
+              {isSubmitting && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
               Finalizar
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -176,4 +166,5 @@ const Cart = ({ setIsOpen }: CartProps) => {
     </>
   );
 };
+
 export default Cart;

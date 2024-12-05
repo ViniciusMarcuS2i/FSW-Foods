@@ -1,7 +1,8 @@
+/* eslint-disable no-unused-vars */
 "use client";
 
-import { Prisma, Product } from "@prisma/client";
-import { createContext, useMemo, useState } from "react";
+import { Prisma } from "@prisma/client";
+import { ReactNode, createContext, useState } from "react";
 import { calculateProdutTotalPrice } from "../_helpers/price";
 
 export interface CartProduct
@@ -9,8 +10,8 @@ export interface CartProduct
     include: {
       restaurant: {
         select: {
-          deliveryFee: true;
           id: true;
+          deliveryFee: true;
           deliveryTimeMinutes: true;
         };
       };
@@ -27,21 +28,9 @@ interface ICartContext {
   totalQuantity: number;
   addProductToCart: ({
     product,
-    quantity,
     emptyCart,
   }: {
-    product: Prisma.ProductGetPayload<{
-      include: {
-        restaurant: {
-          select: {
-            deliveryFee: true;
-            id: true;
-            deliveryTimeMinutes: true;
-          };
-        };
-      };
-    }>;
-    quantity: number;
+    product: CartProduct;
     emptyCart?: boolean;
   }) => void;
   decreaseProductQuantity: (productId: string) => void;
@@ -61,125 +50,123 @@ export const CartContext = createContext<ICartContext>({
   increaseProductQuantity: () => {},
   removeProductFromCart: () => {},
   clearCart: () => {},
-} as ICartContext);
+});
 
-export const CartProvider = ({ children }: { children: React.ReactNode }) => {
+export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [products, setProducts] = useState<CartProduct[]>([]);
 
-  const subtotalPrice = useMemo(() => {
-    return products.reduce((acc, product) => {
-      return acc + Number(product.price) * product.quantity;
-    }, 0);
-  }, [products]);
+  const subtotalPrice = products.reduce((acc, product) => {
+    return acc + Number(product.price) * product.quantity;
+  }, 0);
 
-  const totalPrice = useMemo(() => {
-    return (
-      products.reduce((acc, product) => {
-        return acc + calculateProdutTotalPrice(product) * product.quantity;
-      }, 0) + Number(products[0]?.restaurant.deliveryFee)
-    );
-  }, [products]);
+  const totalPrice =
+    products.reduce((acc, product) => {
+      return acc + calculateProdutTotalPrice(product) * product.quantity;
+    }, 0) + Number(products?.[0]?.restaurant?.deliveryFee);
+
+  const totalQuantity = products.reduce((acc, product) => {
+    return acc + product.quantity;
+  }, 0);
 
   const totalDiscounts =
-    subtotalPrice - totalPrice + Number(products[0]?.restaurant.deliveryFee);
-
-  const totalQuantity = useMemo(() => {
-    return products.reduce((acc, product) => {
-      return acc + product.quantity;
-    }, 0);
-  }, [products]);
+    subtotalPrice - totalPrice + Number(products?.[0]?.restaurant?.deliveryFee);
 
   const clearCart = () => {
-    setProducts([]);
+    return setProducts([]);
   };
 
-  const decreaseProductQuantity = (productId: string) => {
-    setProducts((state) =>
-      state.map((product) => {
-        if (product.id === productId) {
+  const decreaseProductQuantity: ICartContext["decreaseProductQuantity"] = (
+    productId: string,
+  ) => {
+    return setProducts((prev) =>
+      prev.map((cartProduct) => {
+        if (cartProduct.id === productId) {
+          if (cartProduct.quantity === 1) {
+            return cartProduct;
+          }
+
           return {
-            ...product,
-            quantity: product.quantity - 1,
+            ...cartProduct,
+            quantity: cartProduct.quantity - 1,
           };
         }
-        return product;
+
+        return cartProduct;
       }),
     );
   };
 
-  const increaseProductQuantity = (productId: string) => {
-    setProducts((state) =>
-      state.map((product) => {
-        if (product.id === productId) {
+  const increaseProductQuantity: ICartContext["increaseProductQuantity"] = (
+    productId: string,
+  ) => {
+    return setProducts((prev) =>
+      prev.map((cartProduct) => {
+        if (cartProduct.id === productId) {
           return {
-            ...product,
-            quantity: product.quantity + 1,
+            ...cartProduct,
+            quantity: cartProduct.quantity + 1,
           };
         }
-        return product;
+
+        return cartProduct;
       }),
     );
   };
 
-  const removeProductFromCart = (productId: string) => {
-    setProducts((state) => state.filter((product) => product.id !== productId));
+  const removeProductFromCart: ICartContext["removeProductFromCart"] = (
+    productId: string,
+  ) => {
+    return setProducts((prev) =>
+      prev.filter((product) => product.id !== productId),
+    );
   };
 
-  const addProductToCart = ({
+  const addProductToCart: ICartContext["addProductToCart"] = ({
     product,
-    quantity,
     emptyCart,
-  }: {
-    product: Prisma.ProductGetPayload<{
-      include: {
-        restaurant: {
-          select: {
-            deliveryFee: true;
-            id: true;
-            deliveryTimeMinutes: true;
-          };
-        };
-      };
-    }>;
-    quantity: number;
-    emptyCart?: boolean;
   }) => {
     if (emptyCart) {
       setProducts([]);
     }
 
-    const isProductInCart = products.some((item) => item.id === product.id);
+    // VERIFICAR SE O PRODUTO JÁ ESTÁ NO CARRINHO
+    const isProductAlreadyOnCart = products.some(
+      (cartProduct) => cartProduct.id === product.id,
+    );
 
-    if (isProductInCart) {
-      return setProducts((state) =>
-        state.map((cartProduct) => {
+    // SE ELE ESTIVER, AUMENTAR A SUA QUANTIDADE
+    if (isProductAlreadyOnCart) {
+      return setProducts((prev) =>
+        prev.map((cartProduct) => {
           if (cartProduct.id === product.id) {
             return {
               ...cartProduct,
-              quantity: cartProduct.quantity + quantity,
+              quantity: cartProduct.quantity + product.quantity,
             };
           }
+
           return cartProduct;
         }),
       );
     }
 
-    setProducts((state) => [...state, { ...product, quantity: quantity }]);
+    // SE NÃO, ADICIONÁ-LO COM A QUANTIDADE RECEBIDA
+    setProducts((prev) => [...prev, product]);
   };
 
   return (
     <CartContext.Provider
       value={{
-        totalQuantity,
         products,
         subtotalPrice,
         totalPrice,
         totalDiscounts,
+        totalQuantity,
+        clearCart,
         addProductToCart,
         decreaseProductQuantity,
         increaseProductQuantity,
         removeProductFromCart,
-        clearCart,
       }}
     >
       {children}
